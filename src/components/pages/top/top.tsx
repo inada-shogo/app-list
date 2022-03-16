@@ -1,62 +1,39 @@
-import React, { useCallback, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { State } from "../../../redux/root.reducer";
-import { SampleActions } from "../../../redux/sample/sample.action";
+import React, { useEffect, useState} from "react";
+import { useDispatch } from "react-redux";
+import db from "../../../firebase";
+import { collection, getDocs, onSnapshot} from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
+
+type dbType = {
+  id: string;
+  name: string;
+  sig: string;
+}
+
 
 export const Top = () => {
   // アクション発行できるようになる
   const dispatch = useDispatch();
-  const [state, setState] = useState("");
-  const [result, setResult] = useState("");
+  const [posts, setPosts] = useState();
+  const [info, setInfo] = useState<dbType[]>([]);
 
-  // selector Storeの中身参照→ 持ってくる
-  const str = useSelector((state: State) => state.sample.str);
+  useEffect(() => {
+    // データを取得する。
+    const info = collection(db, 'users');
+    getDocs(info).then((snapShot) => {
+      console.log(snapShot.docs.map((doc) => ({...doc.data()})));
+    })
 
-  const handleClickTest = useCallback(() => {
-    // アクションを動かしてる
-    dispatch(
-      SampleActions.test({
-        str: state,
-        onSuccess: (str) => {
-          setResult(str);
-        },
-      })
-    );
-  }, [dispatch, state]);
+    console.log(uuidv4());
+
+    // リアルタイムに取得
+    onSnapshot(info, (v) => {
+      console.log(v.docs.map((doc) => ({...doc.data()})));
+    })
+  }, []);
 
   return (
     <div className={'top'}>
-      {/*  */}
-      <h1>テストです</h1>
-      
-      {/*  */}
-      <h2>Reducerの中身 : {str}</h2>
-      <h2>Reducerの中身 : {result}</h2>
-      
-      <div>
-        {/*  */}
-        {/*  */}
-        <input
-          type="text"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-        />
-      </div>
-      <div>
-        {/*  */}
-        <button onClick={handleClickTest}> Redux Test </button>
-      </div>
     </div>
   );
 };
-
-/**
- *
- *
- */
-
-// Redux
-
-// action : 動作
-// dispatch : アクション発行
-// reducer : それを保存する場所
